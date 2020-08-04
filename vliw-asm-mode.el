@@ -11,7 +11,7 @@
 ;; write VLIW assembler, and dealing with brain damaged functionality in the
 ;; original asm-mode's main function.
 
-;; This works for me, so don't expect it to work for your use cases.
+;; This works for me but don't expect it to work for your use cases.
 
 ;; TODO(jtg): Rewrite this to be more respectful of modern emacs settings such
 ;; as tab-modes, etc.
@@ -53,26 +53,42 @@
     map)
   "Keymap for Vliw-Asm mode.")
 
-(defun vliw-generate-font-lock-register-string (register-list)
+(defun vliw-asm-generate-font-lock-register-string (register-list)
+  "Converts the shorthand representation of registers into a list of strings.
+
+Elements of REGISTER-LIST are either strings or a three-element
+list of (stem min max). The format of the list is the arglist expected in
+`vliw-asm-generate-register-set'."
   (loop for ele in register-list append
         (cond ((stringp ele) (list ele))
-              ((listp ele) (apply 'vliw-generate-register-set ele))
+              ((listp ele) (apply 'vliw-asm-generate-register-set ele))
               (t ""))))
 
-(defun vliw-generate-register-set (stem min max)
-  "Generates a list of register name strings of the form STEMn, where n is between min and max, inclusive."
+(defun vliw-asm-generate-register-set (stem min max)
+  "Generates a list of register name strings of the form STEMn, where n is
+between MIN and MAX, inclusive.
+
+For example, with a stem of \"a\" and a min of 0 and a max of 3, this will
+generate the list (\"a0\" \"a1\" \"a2\" \"a3\")."
   (mapcar (lambda (n) (concatenate 'string stem n))
             (loop for n from min to max collect (number-to-string n))))
 
-(defvar vliw-register-list
+(defvar vliw-asm-register-list
   '(("x" 0 31)
     "zero" "ra" "sp" "gp" "tp"
     ("t" 0 6)
     ("s" 0 11)
     ("a" 0 7)
-    "fp"))
+    "fp")
+  "This is a list of lists or strings that define the registers in the ISA. Each
+element can be a string of the actual register name, or a list of the form
+(stem min max), where stem is a string of the base part of the register name,
+and min and max are the minimum number and maximum number. This allows for
+compact definitions of arrays of registers.
 
-(defvar vliw-opcode-list
+Ie: (\"x 0 3\") will be transformed into x0 x1 x2 and x3.")
+
+(defvar vliw-asm-opcode-list
   (mapcar 'symbol-name
          (append '(lb lh lw lbu lhu)
                  '(sb sh sw)
@@ -88,26 +104,27 @@
                  '(csrrw csrrs csrrc csrrwi csrrsi csrrci)
                  '(ecall ebreak eret)
                  '(mrts mrth hrts)
-                 '(wfi sfence.vm))))
+                 '(wfi sfence.vm)))
+  "A list of strings of opcode names in the ISA.")
 
-(defvar vliw-asm-font-lock-keywords
-  (append
+(defun vliw-asm-generate-font-lock-keywords ()
+  "Generates the font-lock-keywords needed for syntax highlighting. Called by `vliw-asm-mode'."
+  (list (append
    `(;; registers
      (,(concatenate 'string "\\<\\("
-                    (string-join (vliw-generate-font-lock-register-string vliw-register-list) "\\|")
+                    (string-join (vliw-asm-generate-font-lock-register-string vliw-asm-register-list) "\\|")
                     "\\)\\>")
       (1 font-lock-constant-face))
      ;; beginning_of_line_labels:
      ("^\\(\\.?\\(\\sw\\|\\s_\\)+\\):"
       (1 font-lock-function-name-face))
      ;; .pseudo ops
-     ("\\(\\.\\(\\sw\\|\\s_\\)+\\)\\>"
-      (1 font-lock-preprocessor-face))
+     ("^\\s *\\(\\.\\(\\sw\\|\\s_\\)+\\)"
+      (1 font-lock-constant-face))
      ;; opcode operand, operand
-     (,(concatenate 'string "\\<\\(" (string-join vliw-opcode-list "\\|") "\\)\\>")
+     (,(concatenate 'string "\\<\\(" (string-join vliw-asm-opcode-list "\\|") "\\)\\>")
       (1 font-lock-keyword-face))
-   cpp-font-lock-keywords))
-  "Additional expressions to highlight in Assembler mode.")
+   cpp-font-lock-keywords))))
 
 ;;;###autoload
 (define-derived-mode vliw-asm-mode prog-mode "VLIW"
@@ -120,11 +137,8 @@ Turning on Vliw-Asm mode runs the hook `vliw-asm-mode-hook' at the end of initia
 Special commands:
 \\{vliw-asm-mode-map}"
   (setq local-abbrev-table vliw-asm-mode-abbrev-table)
-  (set (make-local-variable 'font-lock-defaults) '(vliw-asm-font-lock-keywords))
-
-  ;; Stay closer to the old TAB behavior (was tab-to-tab-stop).
+  (set (make-local-variable 'font-lock-defaults) (vliw-asm-generate-font-lock-keywords))
   (set (make-local-variable 'tab-always-indent) nil)
-
   (set-syntax-table (make-syntax-table vliw-asm-mode-syntax-table)))
 
 (provide 'vliw-asm-mode)
