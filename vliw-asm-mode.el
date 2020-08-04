@@ -24,6 +24,7 @@
 
 ;;; Code:
 
+(require 'subr)
 (require 'subr-x)
 
 (eval-when-compile
