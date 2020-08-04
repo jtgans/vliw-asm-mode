@@ -89,23 +89,27 @@ compact definitions of arrays of registers.
 Ie: (\"x 0 3\") will be transformed into x0 x1 x2 and x3.")
 
 (defvar vliw-asm-opcode-list
-  (mapcar 'symbol-name
-         (append '(lb lh lw lbu lhu)
-                 '(sb sh sw)
-                 '(sll slli srl srli sra srai)
-                 '(add addi sub lui auipc)
-                 '(xor xori or ori and andi)
-                 '(slt slti sltu sltiu)
-                 '(beq bne blt bge bltu bgeu)
-                 '(jal jalr)
-                 '(fence fence.i)
-                 '(scall sbreak)
-                 '(rdcycle rdcycleh rdtime rdtimeh rdinstret rdinstreth)
-                 '(csrrw csrrs csrrc csrrwi csrrsi csrrci)
-                 '(ecall ebreak eret)
-                 '(mrts mrth hrts)
-                 '(wfi sfence.vm)))
+  (append '(lb lh lw lbu lhu)
+          '(sb sh sw)
+          '(sll slli srl srli sra srai)
+          '(add addi sub lui auipc)
+          '(xor xori or ori and andi)
+          '(slt slti sltu sltiu)
+          '(beq bne blt bge bltu bgeu)
+          '(jal jalr)
+          '(fence fence.i)
+          '(scall sbreak)
+          '(rdcycle rdcycleh rdtime rdtimeh rdinstret rdinstreth)
+          '(csrrw csrrs csrrc csrrwi csrrsi csrrci)
+          '(ecall ebreak eret)
+          '(mrts mrth hrts)
+          '(wfi sfence.vm))
   "A list of strings of opcode names in the ISA.")
+
+(defun vliw-asm-generate-opcode-list (opcode-list)
+  "Generates a sorted list of strings from the symbols defined in OPCODE-LIST."
+  (sort (sort (mapcar 'symbol-name opcode-list) 'string>)
+        (lambda (a b) (> (length a) (length b)))))
 
 (defun vliw-asm-generate-font-lock-keywords ()
   "Generates the font-lock-keywords needed for syntax highlighting. Called by `vliw-asm-mode'."
@@ -121,8 +125,8 @@ Ie: (\"x 0 3\") will be transformed into x0 x1 x2 and x3.")
      ;; .pseudo ops
      ("^\\s *\\(\\.\\(\\sw\\|\\s_\\)+\\)"
       (1 font-lock-constant-face))
-     ;; opcode operand, operand
-     (,(concatenate 'string "\\<\\(" (string-join vliw-asm-opcode-list "\\|") "\\)\\>")
+     ;; opcode
+     (,(concatenate 'string "\\<\\(" (string-join (vliw-asm-generate-opcode-list) "\\|") "\\)\\>")
       (1 font-lock-keyword-face))
    cpp-font-lock-keywords))))
 
