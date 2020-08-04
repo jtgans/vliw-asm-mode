@@ -24,7 +24,6 @@
 
 ;;; Code:
 
-(require 'subr)
 (require 'subr-x)
 
 (eval-when-compile
@@ -61,12 +60,10 @@ Elements of REGISTER-LIST are either strings or a three-element
 list of (stem min max). The format of the list is the arglist expected in
 `vliw-asm-generate-register-set'."
   (sort
-   (sort
-    (loop for ele in register-list append
-          (cond ((stringp ele) (list ele))
-                ((listp ele) (apply 'vliw-asm-generate-register-set ele))
-                (t "")))
-    'string>)
+   (loop for ele in register-list append
+         (cond ((stringp ele) (list ele))
+               ((listp ele) (apply 'vliw-asm-generate-register-set ele))
+               (t "")))
    (lambda (a b) (> (length a) (length b)))))
 
 (defun vliw-asm-generate-register-set (stem min max)
@@ -113,7 +110,7 @@ Ie: (\"x 0 3\") will be transformed into x0 x1 x2 and x3.")
 
 (defun vliw-asm-generate-opcode-list (opcode-list)
   "Generates a sorted list of strings from the symbols defined in OPCODE-LIST."
-  (sort (sort (mapcar 'symbol-name opcode-list) 'string>)
+  (sort (mapcar 'symbol-name opcode-list)
         (lambda (a b) (> (length a) (length b)))))
 
 (defun vliw-asm-generate-font-lock-keywords ()
