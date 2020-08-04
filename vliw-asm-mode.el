@@ -35,14 +35,13 @@
   :group 'languages)
 
 (defvar vliw-asm-mode-syntax-table
-  (setq vliw-asm-mode-syntax-table (let ((st (make-syntax-table)))
+  (let ((st (make-syntax-table)))
     (modify-syntax-entry ?\n "> b" st)
     (modify-syntax-entry ?\; "> b" st)
+    (modify-syntax-entry ?\# "< b" st)
     (modify-syntax-entry ?/  ". 124b" st)
     (modify-syntax-entry ?*  ". 23" st)
-    (modify-syntax-entry ?{  ". (" st)
-    (modify-syntax-entry ?}  ">. )" st)
-    st))
+    st)
   "Syntax table used while in Vliw-Asm mode.")
 
 (defvar vliw-asm-mode-abbrev-table nil
