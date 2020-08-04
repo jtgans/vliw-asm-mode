@@ -59,10 +59,14 @@
 Elements of REGISTER-LIST are either strings or a three-element
 list of (stem min max). The format of the list is the arglist expected in
 `vliw-asm-generate-register-set'."
-  (loop for ele in register-list append
-        (cond ((stringp ele) (list ele))
-              ((listp ele) (apply 'vliw-asm-generate-register-set ele))
-              (t ""))))
+  (sort
+   (sort
+    (loop for ele in register-list append
+          (cond ((stringp ele) (list ele))
+                ((listp ele) (apply 'vliw-asm-generate-register-set ele))
+                (t "")))
+    'string>)
+   (lambda (a b) (> (length a) (length b)))))
 
 (defun vliw-asm-generate-register-set (stem min max)
   "Generates a list of register name strings of the form STEMn, where n is
@@ -126,7 +130,7 @@ Ie: (\"x 0 3\") will be transformed into x0 x1 x2 and x3.")
      ("^\\s *\\(\\.\\(\\sw\\|\\s_\\)+\\)"
       (1 font-lock-constant-face))
      ;; opcode
-     (,(concatenate 'string "\\<\\(" (string-join (vliw-asm-generate-opcode-list) "\\|") "\\)\\>")
+     (,(concatenate 'string "\\<\\(" (string-join (vliw-asm-generate-opcode-list vliw-asm-opcode-list) "\\|") "\\)\\>")
       (1 font-lock-keyword-face))
    cpp-font-lock-keywords))))
 
