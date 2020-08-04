@@ -24,6 +24,11 @@
 
 ;;; Code:
 
+(require 'subr-x)
+
+(eval-when-compile
+  (require 'cl))
+
 (defgroup vliw-asm nil
   "Mode for editing assembler code."
   :link '(custom-group-link :tag "Font Lock Faces group" font-lock-faces)
